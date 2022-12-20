@@ -43,39 +43,42 @@
 
       <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
 
-      <div class="tips">
-        <span style="margin-right:20px;">username: admin</span>
-        <span> password: any</span>
-      </div>
+<!--      <div class="tips">-->
+<!--        <span style="margin-right:20px;">username: admin</span>-->
+<!--        <span> password: any</span>-->
+<!--      </div>-->
 
     </el-form>
   </div>
 </template>
 
 <script>
-import { validUsername } from '@/utils/validate'
+// import { validUsername } from '@/utils/validate'
+import { Message } from 'element-ui'
 
 export default {
   name: 'Login',
   data() {
     const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
-        callback(new Error('Please enter the correct user name'))
+      const regEmail = /^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$/
+      // if (!validUsername(value)) {
+      if (!regEmail.test(value)) {
+        callback(new Error('请输入合法的邮箱'))
       } else {
         callback()
       }
     }
     const validatePassword = (rule, value, callback) => {
-      if (value.length < 6) {
-        callback(new Error('The password can not be less than 6 digits'))
+      if (value.length === 0) {
+        callback(new Error('密码不能为空'))
       } else {
         callback()
       }
     }
     return {
       loginForm: {
-        username: 'admin',
-        password: '111111'
+        username: 'tang.k.5@pg.com',
+        password: '123456'
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -109,11 +112,27 @@ export default {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
-            this.$router.push({ path: this.redirect || '/' })
+          this.$store.dispatch('user/login', this.loginForm).then(res => {
+            if (res.code === 1000) {
+              this.$router.push({ path: this.redirect || '/' })
+              // this.$store.dispatch('permission/getMenu').then(res => {
+              // console.log('kk')
+              // })
+            } else {
+              this.loading = false
+              Message({
+                message: res.msg,
+                type: 'error',
+                duration: 3 * 1000
+              })
+            }
+          }).catch((res) => {
             this.loading = false
-          }).catch(() => {
-            this.loading = false
+            Message({
+              message: res.msg,
+              type: 'error',
+              duration: 3 * 1000
+            })
           })
         } else {
           console.log('error submit!!')

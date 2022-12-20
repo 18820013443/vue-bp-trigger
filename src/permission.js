@@ -5,6 +5,7 @@ import NProgress from 'nprogress' // progress bar
 import 'nprogress/nprogress.css' // progress bar style
 import { getToken } from '@/utils/auth' // get token from cookie
 import getPageTitle from '@/utils/get-page-title'
+import { assembleMenu } from '@/router/routers'
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
@@ -24,8 +25,9 @@ router.beforeEach(async(to, from, next) => {
     if (to.path === '/login') {
       // if is logged in, redirect to the home page
       next({ path: '/' })
+      // 登陆成功，需要请求菜单
       NProgress.done()
-    } else {
+    } else { // 有token，但是不在登陆页，需要请求菜单
       const hasGetUserInfo = store.getters.name
       if (hasGetUserInfo) {
         next()
@@ -33,8 +35,11 @@ router.beforeEach(async(to, from, next) => {
         try {
           // get user info
           await store.dispatch('user/getInfo')
-
-          next()
+          // await store.dispatch('permission/GetMenu')
+          store.dispatch('permission/GetMenu').then((data) => {
+            LoadMenu(data)
+          })
+          next({ ...to, replace: true })
         } catch (error) {
           // remove token and go to login page to re-login
           await store.dispatch('user/resetToken')
@@ -62,3 +67,13 @@ router.afterEach(() => {
   // finish progress bar
   NProgress.done()
 })
+
+const LoadMenu = (data) => {
+  const dynamicMenu = assembleMenu(data)
+  dynamicMenu.push({ path: '*', redirect: '/404', hidden: true })
+  const menu = store.state.permission.routers.concat(dynamicMenu)
+  store.commit('permission/GET_MENU', menu)
+  // router.options.routes = menu
+  console.log(menu)
+  router.addRoutes(menu)
+}

@@ -24,6 +24,7 @@ module.exports = {
    * In most cases please use '/' !!!
    * Detail: https://cli.vuejs.org/config/#publicpath
    */
+  // devtool: 'source-map',
   publicPath: '/',
   outputDir: 'dist',
   assetsDir: 'static',
@@ -35,6 +36,16 @@ module.exports = {
     overlay: {
       warnings: false,
       errors: true
+    },
+    proxy: {
+      '^/': {
+        target: 'http://127.0.0.1:8000',
+        ws: true,
+        changeOrigin: true,
+        pathRewrite: {
+          ['^' + process.env.VUE_APP_BASE_API]: ''
+        }
+      }
     },
     before: require('./mock/mock-server.js')
   },
